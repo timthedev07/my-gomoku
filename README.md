@@ -10,3 +10,11 @@ An agent that can play strategically against a human!
 * A double threat is a situation where two threats are created simultaneously, making it impossible for the opponent to block both.
 * A winning threat sequence is a series of moves that give rise to a double threat, leading to an inevitable win. 
 
+## Reducing the Search Space
+
+Consider forced moves: Suppose we have an immediate threat, such as an unblocked three, then, we should prioritise the subsequent moves that result from the opponent blocking that threat in all possible ways. Or, suppose we have a threat of four, then we can just consider what happens after the opponent blocks that threat, because we know the opponent must take that move.
+
+The following definitions are in place to help describe the threat-space search:
+
+1. The **gain square** is the square played by the attacker to create a threat.
+2. The **cost squares** of a threat are the squares that the opponent must play to block the threat.

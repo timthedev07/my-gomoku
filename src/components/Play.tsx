@@ -53,18 +53,13 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                     if (!userPlayer) return;
                     setBoard(b => {
                       const newBoard = makeMove(b, [i, j], userPlayer)
-                      console.log("got new board", newBoard);
                       const [_isTerminal, _winner] = terminal(newBoard);
                       setIsTerminal(_isTerminal);
-
                       if (_isTerminal && _winner !== Cell.EMPTY) {
                         setWinner(_winner);
                       }
-
                       const aiMove = nextMove(newBoard, -userPlayer);
-
                       const aiBoard = makeMove(newBoard, aiMove, -userPlayer);
-
                       return aiBoard;
                     });
                   }
