@@ -12,10 +12,9 @@ const iter = Array.from({ length: DIM });
 
 interface PlayProps extends PropsWithChildren {
   userPlayer: Player | null;
-  updateWinner: (winner: Player) => void;
 }
 
-const Component: FC<PlayProps> = ({ userPlayer, updateWinner }) => {
+const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [board, setBoard] = useState<number[][]>(() => getInitialBoard());
   const [isTerminal, setIsTerminal] = useState<boolean>(false);
   const [winner, setWinner] = useState<Player | null>(null);
@@ -31,31 +30,11 @@ const Component: FC<PlayProps> = ({ userPlayer, updateWinner }) => {
 
   if (!userPlayer) return <></>;
 
-
-
-  const userMakeMove = (i: number, j: number) => {
-    return () => {
-      if (!userPlayer) return;
-      setBoard(b => {
-        const newBoard = makeMove(b, [i, j], userPlayer)
-        const [_isTerminal, _winner] = terminal(newBoard);
-        setIsTerminal(_isTerminal);
-        if (_isTerminal && _winner !== Cell.EMPTY) {
-          setWinner(_winner);
-          updateWinner(_winner);
-        }
-
-        const aiMove = nextMove(newBoard, -userPlayer);
-
-        const aiBoard = makeMove(newBoard, aiMove, -userPlayer);
-
-        return aiBoard;
-      });
-    };
-  }
-
   return (
-    <main className="mt-18 mb-48 p-8 bg-[#a9774d] border border-[#b6a075] rounded-lg shadow-2xl flex flex-col items-center justify-center">
+    <main className="relative mt-18 mb-48 p-8 bg-[#a9774d] border border-[#b6a075] rounded-lg shadow-2xl flex flex-col items-center justify-center">
+      <div className={`flex justify-center items-center ${!!winner ? 'block' : 'hidden'} rounded-lg glass bg-gray-800/50 w-full h-full z-20 absolute`}>
+        {winner === Cell.BLACK ? "Black wins!" : winner === Cell.WHITE ? "White wins!" : "It's a draw!"}
+      </div>
       <div id="board" className="relative mx-auto flex items-center justify-center">
         <div style={{
           "gridTemplateRows": `repeat(${DIM}, minmax(0, 1fr))`,
@@ -69,7 +48,27 @@ const Component: FC<PlayProps> = ({ userPlayer, updateWinner }) => {
                 className={
                   `row-start-[${i + 1}] col-start-[${j + 1}] text-center transform`
                 } key={`${i}-${j}`}
-                onClick={userMakeMove(i, j)}
+                onClick={
+                  () => {
+                    if (!userPlayer) return;
+                    setBoard(b => {
+                      const newBoard = makeMove(b, [i, j], userPlayer)
+                      console.log("got new board", newBoard);
+                      const [_isTerminal, _winner] = terminal(newBoard);
+                      setIsTerminal(_isTerminal);
+
+                      if (_isTerminal && _winner !== Cell.EMPTY) {
+                        setWinner(_winner);
+                      }
+
+                      const aiMove = nextMove(newBoard, -userPlayer);
+
+                      const aiBoard = makeMove(newBoard, aiMove, -userPlayer);
+
+                      return aiBoard;
+                    });
+                  }
+                }
                 disabled={isTerminal || board[i][j] !== Cell.EMPTY}
               >
                 {board[i][j] === Cell.EMPTY ? (

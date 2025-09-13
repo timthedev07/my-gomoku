@@ -34,7 +34,7 @@ export const PlayUI = () => {
           </div>
         </div>
       </div> : <></>}
-      <Play userPlayer={userPlayer} updateWinner={(w) => setUserPlayer(w)} />
+      <Play userPlayer={userPlayer} />
     </>
   )
 }
