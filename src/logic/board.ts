@@ -56,9 +56,13 @@ export const checkWin = (board: Board) => {
 
     do {
       ++s;
-      i += dRow;
-      j += dCol;
-    } while (board[i][j] === player && i >= 0 && i < DIM && j >= 0 && j < DIM);
+      if (i > 0 && i < DIM - 1 && j > 0 && j < DIM - 1) {
+        i += dRow;
+        j += dCol;
+      } else {
+        break
+      }
+    } while (board[i][j] === player);
 
     return s === 5;
   }
