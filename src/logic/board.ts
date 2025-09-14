@@ -13,15 +13,15 @@ export type Point = [number, number];
 
 export const getInitialBoard = (): Cell[][] => {
   return Array.from({ length: DIM }, () => Array(DIM).fill(Cell.EMPTY));
-}
+};
 
 /**
  * Get all valid successor points on the board.
  * Prune is a function that returns true if the cell should be pruned.
  * If a prune function is not provided, no cells will be pruned by default
-*/
+ */
 export const getSuccessors = (
-  board: Board, 
+  board: Board,
   pruneFunctions: ((board: Board, cell: Point) => boolean)[] = []
 ): Point[] => {
   const successors: Point[] = [];
@@ -44,21 +44,22 @@ export const getSuccessors = (
     }
   }
   return successors;
-}
+};
 
-export const makeMove = (board: Board, [row, col]: Point, player: Player) => {
+export const makeMove = (board: Board, action: Point, player: Player) => {
+  const [row, col] = action;
   const newBoard = structuredClone(board);
   newBoard[row][col] = player;
   return newBoard;
-}
+};
 
 /**
  * If there is a winner, return it; otherwise return 0
  */
 export const checkWin = (board: Board) => {
   /**
-    * The direction is a vector representing the direction to check for a win
-    */
+   * The direction is a vector representing the direction to check for a win
+   */
   const hasWinSequence = (pointer: Point, direction: Point, player: Player) => {
     const [i0, j0] = pointer;
     const [dRow, dCol] = direction;
@@ -72,12 +73,12 @@ export const checkWin = (board: Board) => {
         i += dRow;
         j += dCol;
       } else {
-        break
+        break;
       }
     } while (board[i][j] === player);
 
     return s === 5;
-  }
+  };
 
   for (let i = 0; i < DIM; ++i) {
     for (let j = 0; j < DIM; ++j) {
@@ -91,20 +92,17 @@ export const checkWin = (board: Board) => {
         [1, 1],
         [1, -1],
         [-1, 1],
-        [-1, -1]
+        [-1, -1],
       ] as [number, number][];
       for (const direction of directions) {
         if (hasWinSequence([i, j], direction, player)) {
           return player;
         }
       }
-
     }
   }
   return 0;
 };
-
-
 
 /**
  * We don't need a separate utility because every terminal check will compute the winner if any
@@ -124,5 +122,4 @@ export const terminal = (board: Board): [boolean, Cell] => {
     }
   }
   return [true, 0]; // draw
-}
-
+};

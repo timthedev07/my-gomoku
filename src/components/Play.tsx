@@ -22,6 +22,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {
       setBoard(b => {
+        if (!b) return b;
         const newBoard = makeMove(b, [
           Math.floor(DIM / 2),
           Math.floor(DIM / 2)
@@ -56,6 +57,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                   () => {
                     if (!userPlayer) return;
                     setBoard(b => {
+                      if (!b) return b;
                       const newBoard = makeMove(b, [i, j], userPlayer)
                       const [_isTerminal, _winner] = terminal(newBoard);
                       setIsTerminal(_isTerminal);
