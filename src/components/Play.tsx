@@ -22,13 +22,17 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {
       setBoard(b => {
-        const newBoard = makeMove(b, nextMove(b, Cell.BLACK), Cell.BLACK);
+        const newBoard = makeMove(b, [
+          Math.floor(DIM / 2),
+          Math.floor(DIM / 2)
+        ], Cell.BLACK);
         return newBoard;
       });
     }
   }, [userPlayer]);
 
   if (!userPlayer) return <></>;
+
 
   return (
     <main className="relative mt-18 mb-48 p-8 bg-[#a9774d] border border-[#b6a075] rounded-lg shadow-2xl flex flex-col items-center justify-center">

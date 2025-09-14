@@ -20,13 +20,25 @@ export const getInitialBoard = (): Cell[][] => {
  * Prune is a function that returns true if the cell should be pruned.
  * If a prune function is not provided, no cells will be pruned by default
 */
-export const getSuccessors = (board: Board, prune: (board: Board, cell: Cell) => boolean = () => false): Point[] => {
+export const getSuccessors = (
+  board: Board, 
+  pruneFunctions: ((board: Board, cell: Point) => boolean)[] = []
+): Point[] => {
   const successors: Point[] = [];
 
   for (let i = 0; i < DIM; ++i) {
     for (let j = 0; j < DIM; ++j) {
       const cell = board[i][j];
-      if (cell === Cell.EMPTY && !prune(board, cell)) {
+      if (cell !== Cell.EMPTY) continue;
+
+      let shouldPrune = false;
+      for (const pruneFunction of pruneFunctions) {
+        if (!!pruneFunction.param && pruneFunction(board, [i, j])) {
+          shouldPrune = true;
+          break;
+        }
+      }
+      if (!shouldPrune) {
         successors.push([i, j]);
       }
     }

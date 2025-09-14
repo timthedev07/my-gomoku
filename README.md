@@ -14,7 +14,12 @@ An agent that can play strategically against a human!
 
 Consider forced moves: Suppose we have an immediate threat, such as an unblocked three, then, we should prioritise the subsequent moves that result from the opponent blocking that threat in all possible ways. Or, suppose we have a threat of four, then we can just consider what happens after the opponent blocks that threat, because we know the opponent must take that move.
 
+In the original paper, the author refers to 'squares' &mdash; however, this naming is confusing and so I will call them points instead, as we are really placing pieces at the intersections of the grid.
+
 The following definitions are in place to help describe the threat-space search:
 
-1. The **gain square** is the square played by the attacker to create a threat.
-2. The **cost squares** of a threat are the squares that the opponent must play to block the threat.
+1. The **gain point** is the point played by the attacker to create a threat.
+2. The **cost points** of a threat are the points that the opponent must play to block the threat.
+3. The **rest point** of 
+
+
