@@ -1,5 +1,5 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove, checkWin, terminal } from "./board";
+import { Point, Cell, Board, getSuccessors, Player, makeMove, checkWin, terminal, proximityPrune } from "./board";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
@@ -9,22 +9,6 @@ export const nextMove = (
 }
 
 
-export const proximityPrune = (board: Board, point: [number, number], radius = 3) => {
-  const [row, col] = point;
-  // For an empty cell, mark cells within the radius as valid
-  const rowBound = [Math.max(0, row - radius), Math.min(board.length - 1, row + radius)];
-  const colBound = [Math.max(0, col - radius), Math.min(board.length - 1, col + radius)];
-
-  for (let i = rowBound[0]; i <= rowBound[1]; ++i) {
-    for (let j = colBound[0]; j <= colBound[1]; ++j) {
-      if (board[i][j] !== Cell.EMPTY) {
-        return false; // do not prune if has a neighbour
-      }
-    }
-  }
-
-  return true;
-}
 
 /**
  * Returns a score between -1 and 1
@@ -85,7 +69,13 @@ const evaluation = (board: Board) => {
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
 }
 
+// this searches through existing threats and attempts to find winning sequences
+// if no explicit winning sequence is found
+// it will then attempt to connect independent threats into a winning sequence
+// if all else fails, it will return null;
 export const tss = (board: Board, player: Player) => {
+  const successors = getSuccessors(board, [proximityPrune]);
+
 }
 
 export const minimax = (board: Board, depth: number, player: Player) => {
