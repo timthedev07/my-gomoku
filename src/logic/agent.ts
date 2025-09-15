@@ -1,5 +1,5 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove, checkWin, terminal, proximityPrune } from "./board";
+import { Point, Cell, Board, getSuccessors, Player, makeMove, checkWin, terminal, proximityPrune, numThreatsAtPoint, DIM } from "./board";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
@@ -63,8 +63,30 @@ const evaluation = (board: Board) => {
   const blackCenter = averageDistanceToCenter(Cell.BLACK);
   const centerDiffTanh = Math.tanh(whiteCenter - blackCenter);
 
-  const weights = [0.7, 0.3];
-  const scores = [distAvgDiffTanh, centerDiffTanh];
+  // heuristic 3: number of threats
+  const diffNumThreats = () => {
+    // i am aware that some threats are double or triple counted; fuck it
+    // what matters is the difference;
+    let [sB, sW] = [0, 0];
+    for (let i = 0; i < DIM; ++i) {
+      for (let j = 0; j < DIM; ++j) {
+        if (board[i][j] === Cell.EMPTY) {
+          const [a, b] = numThreatsAtPoint(board, [i, j]);
+          sB += a;
+          sW += b;
+        }
+      }
+    }
+    return sB + sW;
+  }
+
+  const k = 1 / 3;
+  const diffThreatsTanh = Math.tanh(k * diffNumThreats());
+
+
+  const weights = [0.3, 0.7];
+  const scores = [centerDiffTanh, diffThreatsTanh];
+
 
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
 }

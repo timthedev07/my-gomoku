@@ -18,14 +18,20 @@ export const longestSequenceAlongDirection = (
 
   let i = skipFirst ? i0 + dRow : i0;
   let j = skipFirst ? j0 + dCol : j0;
-  const val = board[i][j];
-  let s = 0;
 
-  while (i >= 0 && i < board.length && j >= 0 && j < board.length && board[i][j] === val && val !== 0) {
-    s += val;
-    i += dRow;
-    j += dCol;
+  try {
+    const val = board[i][j];
+    let s = 0;
+
+    while (i >= 0 && i < board.length && j >= 0 && j < board.length && board[i][j] === val && val !== 0) {
+      s += val;
+      i += dRow;
+      j += dCol;
+    }
+    return s;
+
+  } catch {
+    return 0;
   }
-  return s;
 }
 
