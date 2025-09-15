@@ -1,32 +1,11 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove } from "./board";
+import { Point, Cell, Board, getSuccessors, Player, makeMove, checkWin, terminal } from "./board";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
   player: Player, // the player for which to suggest a move
 ) => {
-  const successors = getSuccessors(board, [proximityPrune]);
-
-  let [best, bestScore]: [Point | null, number] = [null, player === Cell.BLACK ? -Infinity : Infinity];
-
-  for (const successor of successors) {
-    const newBoard = makeMove(board, successor, player)!;
-    // evaluate the new board
-    const score = evaluation(newBoard);
-    // keep track of the best move
-    if (player === Cell.WHITE) {
-      if (score < bestScore) {
-        bestScore = score;
-        best = successor;
-      }
-    } else {
-      if (score > bestScore) {
-        bestScore = score;
-        best = successor;
-      }
-    }
-  }
-  return best as Point;
+  return minimax(board, 3, player)[0];
 }
 
 
@@ -49,6 +28,7 @@ export const proximityPrune = (board: Board, point: [number, number], radius = 3
 
 /**
  * Returns a score between -1 and 1
+ * assumes a non-terminal board
  */
 const evaluation = (board: Board) => {
   // heuristic 1: average distance between stones
@@ -105,9 +85,73 @@ const evaluation = (board: Board) => {
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
 }
 
-export const minimax = (board: Board, depth: number, player: Player, alpha: number, beta: number) => {
-  if (depth === 0) {
-    return evaluation(board);
+export const tss = (board: Board, player: Player) => {
+}
+
+export const minimax = (board: Board, depth: number, player: Player) => {
+  if (player === Cell.BLACK) {
+    return maximise(board, -Infinity, Infinity, depth);
+  } else {
+    return minimise(board, -Infinity, Infinity, depth);
   }
+
+};
+
+export const minimise = (board: Board, alpha: number, beta: number, depth: number): [Point | null, number] => {
+  const [isTerminal, winner] = terminal(board);
+  if (isTerminal) {
+    return [null, winner];
+  }
+  if (depth === 0) {
+    return [null, evaluation(board)];
+  }
+  const successors = getSuccessors(board, [proximityPrune]);
+  let minVal = Infinity;
+  let bestMove: Point | null = null;
+
+  for (const successor of successors) {
+    const newBoard = makeMove(board, successor, Cell.WHITE);
+    const [_, value] = maximise(newBoard, alpha, beta, depth - 1);
+    if (value < minVal) {
+      minVal = value;
+      bestMove = successor;
+    }
+
+    if (value <= alpha) {
+      break; // alpha cut-off
+    }
+    beta = Math.min(beta, value);
+  }
+
+  return [bestMove, minVal];
+};
+
+export const maximise: typeof minimise = (board, alpha, beta, depth) => {
+  const [isTerminal, winner] = terminal(board);
+  if (isTerminal) {
+    return [null, winner];
+  }
+  if (depth === 0) {
+    return [null, evaluation(board)];
+  }
+  const successors = getSuccessors(board, [proximityPrune]);
+  let maxVal = -Infinity;
+  let bestMove: Point | null = null;
+
+  for (const successor of successors) {
+    const newBoard = makeMove(board, successor, Cell.BLACK);
+    const [_, value] = minimise(newBoard, alpha, beta, depth - 1);
+    if (value > maxVal) {
+      maxVal = value;
+      bestMove = successor;
+    }
+
+    if (value >= beta) {
+      break; // beta cut-off
+    }
+    alpha = Math.max(alpha, value);
+  }
+
+  return [bestMove, maxVal];
 
 };
