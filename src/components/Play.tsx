@@ -7,6 +7,7 @@ import {
   Cell,
   DIM,
   numThreatsAtPoint,
+  Threat,
 } from "@/logic/board";
 import {
   useState,
@@ -34,6 +35,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [prevBoard, setPrevBoard] = useState<number[][] | null>(null);
   const [isTerminal, setIsTerminal] = useState<boolean>(false);
   const [winner, setWinner] = useState<Player | null>(null);
+  const [threatsMap, setThreatsMap] = useState<Map<string, Threat>>(new Map());
 
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {

@@ -2,13 +2,7 @@ import { longestSequenceAlongDirection } from "@/utils/grid";
 
 export type Board = Cell[][];
 export const DIM = 15;
-
-export enum Cell {
-  EMPTY = 0,
-  BLACK = 1,
-  WHITE = -1,
-}
-
+export const WINDOW_SIZE = 7;
 export const ALL_DIRECTIONS: Point[] = [
   [0, 1],
   [1, 0],
@@ -20,9 +14,148 @@ export const ALL_DIRECTIONS: Point[] = [
   [-1, 1],
 ];
 
+export type WindowID = [Point, number]; // starting point and direction (0: diagonal, 1: horizontal, -1: vertical)
+
+
+export interface Threat {
+  player: Player;
+  window: WindowID
+}
+
 export type Player = Cell.BLACK | Cell.WHITE;
 
 export type Point = [number, number];
+
+export enum Cell {
+  EMPTY = 0,
+  BLACK = 1,
+  WHITE = -1,
+}
+
+export const getThreatMapKey = (window: WindowID) => {
+  const [a, b] = window[0];
+  return `${a}_${b}_${window[1]}`;
+}
+
+/**
+ * computes computes the udpated set of threats after a move
+ *
+ * the board is assumed to be updated already by `action`
+ */
+const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, action: Point) => {
+  const affectedWindows = getAllAffectedWindows(action);
+
+  for (const window of affectedWindows) {
+    const key = getThreatMapKey(window);
+    const windowContent = getWindowContent(window, board);
+    const hasThreat = windowHasThreat(windowContent);
+
+    if (threatsMap.has(key)) {
+      // recompute the threat
+      if (hasThreat === 0) {
+        threatsMap.delete(key);
+      } else {
+        threatsMap.set(key, { player: hasThreat, window, });
+      }
+    } else {
+      // no previous threat
+      if (hasThreat !== 0) {
+        threatsMap.set(key, { player: hasThreat, window, });
+      }
+    }
+  }
+
+  return threatsMap;
+}
+
+export const getWindowContent = (key: WindowID, board: Board) => {
+  const dir = key[1] ? [1, 1] : [0, 1];
+  const cells: Cell[] = [];
+  const [i, j] = key[0];
+  for (let k = 0; k < WINDOW_SIZE; ++k) {
+    try {
+      cells.push(board[i + k * dir[0]][j + k * dir[1]]);
+    } catch {
+      cells.push(Cell.EMPTY); // out of bounds
+    }
+  }
+  return cells;
+}
+
+export const getAllAffectedWindows = (point: Point): WindowID[] => {
+  const [row, col] = point;
+  const windows: WindowID[] = [];
+
+  for (let i = row - WINDOW_SIZE + 1; i <= row; ++i) {
+    windows.push([[i, col], -1]);
+  }
+  for (let j = col - WINDOW_SIZE + 1; j <= col; ++j) {
+    windows.push([[row, j], 1]);
+  }
+  for (let k = -WINDOW_SIZE + 1; k <= 0; ++k) {
+    windows.push([[row + k, col + k], 0]);
+  }
+  return windows;
+
+}
+/*
+ * Given a window of length 7, return:
+ *  1 if there is a threat for black
+ *  -1 if there is a threat for white
+ *  0 otherwise
+ */
+export const windowHasThreat = (windowContent: Cell[]): number => {
+  // check threats of type A and B (4 in a row)
+  const n = windowContent.length; // we expect 6
+  for (let i = 0; i <= n - 6; ++i) {
+    const slice = windowContent.slice(i, i + 6);
+    const hasAnOpenEnd = slice[0] === Cell.EMPTY || slice[6] === Cell.EMPTY;
+    if (slice.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
+      if (hasAnOpenEnd) {
+        return 1;
+      }
+    } else if (slice.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
+      if (hasAnOpenEnd) {
+        return -1;
+      }
+    }
+  }
+  // check threats of type C and D (3 in a row with 2 open ends)
+  for (let i = 0; i <= n - 5; ++i) {
+    const slice = windowContent.slice(i, i + 5);
+    const hasOpenEnds = windowContent[i] === Cell.EMPTY && windowContent[i + 4] === Cell.EMPTY;
+
+    if (slice.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
+      if (hasOpenEnds) {
+        return 1;
+      }
+    } else if (slice.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
+      if (hasOpenEnds) {
+        return -1;
+      }
+    }
+  }
+
+  // check threats of type E
+  // slice of size 6
+  for (let i = 0; i <= n - 6; ++i) {
+    const slice = windowContent.slice(i, i + 6);
+    const hasOpenEnds = windowContent[i] === Cell.EMPTY && windowContent[i + 5] === Cell.EMPTY;
+    if (!hasOpenEnds) continue;
+    const r = slice[1];
+    const occupyNearEnds = (r !== Cell.EMPTY) &&
+      (slice[4] !== Cell.EMPTY) &&
+      (r === slice[4]);
+
+    if (!occupyNearEnds) continue;
+
+    if (slice[2] === r || slice[3] === r) {
+      if (r === Cell.BLACK) return 1;
+      else if (r === Cell.WHITE) return -1;
+    }
+  }
+  return 0;
+}
 
 export const getInitialBoard = (): Cell[][] => {
   return Array.from({ length: DIM }, () => Array(DIM).fill(Cell.EMPTY));
