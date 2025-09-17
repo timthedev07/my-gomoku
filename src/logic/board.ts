@@ -1,4 +1,3 @@
-
 export type Board = Cell[][];
 export const DIM = 15;
 export const WINDOW_SIZE = 6;
@@ -15,7 +14,6 @@ export const ALL_DIRECTIONS: Point[] = [
 
 export type WindowID = [Point, number]; // starting point and direction (0: diagonal, 1: horizontal, -1: vertical, 2: anti-diagonal)
 
-
 export type Player = Cell.BLACK | Cell.WHITE;
 
 export type Point = [number, number];
@@ -26,9 +24,15 @@ export enum Cell {
   WHITE = -1,
 }
 
-
 export const getWindowContent = (key: WindowID, board: Board) => {
-  const dir = key[1] === 0 ? [1, 1] : key[1] === 1 ? [0, 1] : key[1] === -1 ? [1, 0] : [1, -1];
+  const dir =
+    key[1] === 0
+      ? [1, 1]
+      : key[1] === 1
+        ? [0, 1]
+        : key[1] === -1
+          ? [1, 0]
+          : [1, -1];
   const cells: Cell[] = [];
   const [i, j] = key[0];
   for (let k = 0; k < WINDOW_SIZE; ++k) {
@@ -39,7 +43,7 @@ export const getWindowContent = (key: WindowID, board: Board) => {
     }
   }
   return cells;
-}
+};
 
 export const getAllAffectedWindows = (point: Point): WindowID[] => {
   const [row, col] = point;
@@ -61,76 +65,27 @@ export const getAllAffectedWindows = (point: Point): WindowID[] => {
     windows.push([[row + k, col - k], 2]);
   }
   return windows;
-}
-/*
- * Given a window of length 7, return:
- *  1 if there is a threat for black
- *  -1 if there is a threat for white
- *  0 otherwise
- */
-export const windowHasThreat = (windowContent: Cell[], window: WindowID): number => {
-  // check threats of type A and B (4 in a row)
-  const hasAnOpenEnd = windowContent[0] === Cell.EMPTY || windowContent[6] === Cell.EMPTY;
-  if (windowContent.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
-    if (hasAnOpenEnd) {
-      return 1;
-    }
-  } else if (windowContent.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
-    if (hasAnOpenEnd) {
-      return -1;
-    }
-  }
-  // check threats of type C and D (3 in a row with 2 open ends)
-  const openThreeCheck = (subwindow: Cell[]) => {
-    const hasOpenEnds = subwindow[0] === Cell.EMPTY && subwindow[4] === Cell.EMPTY;
-
-    if (!hasOpenEnds) return null;
-
-    if (subwindow.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
-      return 1;
-    } else if (subwindow.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
-      return -1;
-    }
-
-    return null;
-  }
-
-  const backCheck = openThreeCheck(windowContent.slice(1, 6));
-  // if window.start is at the edge of the board, also check the front
-  if (window[0][0] === 0 || window[0][1] === 0) {
-    const frontCheck = openThreeCheck(windowContent.slice(0, 5));
-    if (frontCheck !== null) return frontCheck;
-  }
-  if (backCheck !== null) return backCheck;
-
-  // check threats of type E
-  // slice of size 6
-  const hasOpenEnds = windowContent[0] === Cell.EMPTY && windowContent[5] === Cell.EMPTY;
-  if (hasOpenEnds) {
-    const r = windowContent[1];
-    const occupyNearEnds = (r !== Cell.EMPTY) &&
-      (windowContent[4] !== Cell.EMPTY) &&
-      (r === windowContent[4]);
-
-    if (occupyNearEnds) {
-      if (windowContent[2] === r || windowContent[3] === r) {
-        if (r === Cell.BLACK) return 1;
-        else if (r === Cell.WHITE) return -1;
-      }
-    }
-  }
-  return 0;
-}
+};
 
 export const getInitialBoard = (): Cell[][] => {
   return Array.from({ length: DIM }, () => Array(DIM).fill(Cell.EMPTY));
 };
 
-export const proximityPrune = (board: Board, point: [number, number], radius = 3) => {
+export const proximityPrune = (
+  board: Board,
+  point: [number, number],
+  radius = 3,
+) => {
   const [row, col] = point;
   // For an empty cell, mark cells within the radius as valid
-  const rowBound = [Math.max(0, row - radius), Math.min(board.length - 1, row + radius)];
-  const colBound = [Math.max(0, col - radius), Math.min(board.length - 1, col + radius)];
+  const rowBound = [
+    Math.max(0, row - radius),
+    Math.min(board.length - 1, row + radius),
+  ];
+  const colBound = [
+    Math.max(0, col - radius),
+    Math.min(board.length - 1, col + radius),
+  ];
 
   for (let i = rowBound[0]; i <= rowBound[1]; ++i) {
     for (let j = colBound[0]; j <= colBound[1]; ++j) {
@@ -141,7 +96,7 @@ export const proximityPrune = (board: Board, point: [number, number], radius = 3
   }
 
   return true;
-}
+};
 
 /**
  * Get all valid successor points on the board.
@@ -150,7 +105,7 @@ export const proximityPrune = (board: Board, point: [number, number], radius = 3
  */
 export const getSuccessors = (
   board: Board,
-  pruneFunctions: ((board: Board, cell: Point) => boolean)[] = []
+  pruneFunctions: ((board: Board, cell: Point) => boolean)[] = [],
 ): Point[] => {
   const successors: Point[] = [];
 
@@ -180,7 +135,6 @@ export const makeMove = (board: Board, action: Point, player: Player) => {
   newBoard[row][col] = player;
   return newBoard;
 };
-
 
 /**
  * If there is a winner, return it; otherwise return 0
@@ -242,4 +196,3 @@ export const terminal = (board: Board): [boolean, Cell] => {
   }
   return [true, 0]; // draw
 };
-

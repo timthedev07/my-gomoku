@@ -1,4 +1,5 @@
-import { evaluation, nextMove } from "@/logic/agent";
+import { nextMove } from "@/logic/agent";
+import { ThreatsMap, updateThreatsMap } from "@/logic/threats";
 import {
   Player,
   getInitialBoard,
@@ -6,8 +7,6 @@ import {
   makeMove,
   Cell,
   DIM,
-  updateThreatsMap,
-  ThreatsMap,
   Point,
 } from "@/logic/board";
 import { areThreatMapsEqual } from "@/utils/obj";
@@ -73,11 +72,12 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         // console.log("MAKING FUCKING AI MOVE", threatsMap)
         const aiBoard = makeMove(b, aiMove, -userPlayer);
         setPrevBoard(aiBoard);
+
         setThreatsMap((m) => {
           const updated = updateThreatsMap(
             m,
             aiBoard,
-            aiMove as [number, number]
+            aiMove as [number, number],
           );
           setPrevThreatsMap(updated);
           return updated;
@@ -98,8 +98,9 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   return (
     <main className="relative mt-18 mb-48 p-8 bg-[#a9774d] border border-[#b6a075] rounded-lg shadow-2xl flex flex-col items-center justify-center">
       <div
-        className={`flex justify-center items-center ${!!winner ? "block" : "hidden"
-          } rounded-lg glass bg-gray-800/50 w-full h-full z-20 absolute`}
+        className={`flex justify-center items-center ${
+          !!winner ? "block" : "hidden"
+        } rounded-lg glass bg-gray-800/50 w-full h-full z-20 absolute`}
       >
         {winner === Cell.BLACK
           ? "Black wins!"
@@ -129,8 +130,9 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                     height: CELL_SIZE,
                     transform: "translate(-50%, -50%)",
                   }}
-                  className={`row-start-[${i + 1}] col-start-[${j + 1
-                    }] text-center transform`}
+                  className={`row-start-[${i + 1}] col-start-[${
+                    j + 1
+                  }] text-center transform`}
                   key={`${i}-${j}`}
                   onClick={() => {
                     if (!userPlayer) return;
@@ -156,8 +158,9 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                 >
                   {board[i][j] === Cell.EMPTY ? (
                     <div
-                      className={`mx-auto w-6 h-6 cursor-pointer rounded-full transition ease-in duration-150 bg-transparent hover:bg-cyan-500/40 ${isTerminal ? "hidden" : "block"
-                        }`}
+                      className={`mx-auto w-6 h-6 cursor-pointer rounded-full transition ease-in duration-150 bg-transparent hover:bg-cyan-500/40 ${
+                        isTerminal ? "hidden" : "block"
+                      }`}
                     ></div>
                   ) : board[i][j] === Cell.BLACK ? (
                     <div className="w-6 h-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-full mx-auto"></div>

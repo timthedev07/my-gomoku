@@ -4,8 +4,8 @@ import {
   getWindowContent,
   Player,
   Point,
-  windowHasThreat,
   WindowID,
+  Cell,
 } from "./board";
 
 export interface Threat {
@@ -53,4 +53,71 @@ export const updateThreatsMap = (
   }
 
   return threatsMap;
+};
+
+/*
+ * Given a window of length 7, return:
+ *  1 if there is a threat for black
+ *  -1 if there is a threat for white
+ *  0 otherwise
+ */
+export const windowHasThreat = (
+  windowContent: Cell[],
+  window: WindowID,
+): number => {
+  // check threats of type A and B (4 in a row)
+  const hasAnOpenEnd =
+    windowContent[0] === Cell.EMPTY || windowContent[6] === Cell.EMPTY;
+  if (windowContent.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
+    if (hasAnOpenEnd) {
+      return 1;
+    }
+  } else if (windowContent.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
+    if (hasAnOpenEnd) {
+      return -1;
+    }
+  }
+  // check threats of type C and D (3 in a row with 2 open ends)
+  const openThreeCheck = (subwindow: Cell[]) => {
+    const hasOpenEnds =
+      subwindow[0] === Cell.EMPTY && subwindow[4] === Cell.EMPTY;
+
+    if (!hasOpenEnds) return null;
+
+    if (subwindow.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
+      return 1;
+    } else if (subwindow.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
+      return -1;
+    }
+
+    return null;
+  };
+
+  const backCheck = openThreeCheck(windowContent.slice(1, 6));
+  // if window.start is at the edge of the board, also check the front
+  if (window[0][0] === 0 || window[0][1] === 0) {
+    const frontCheck = openThreeCheck(windowContent.slice(0, 5));
+    if (frontCheck !== null) return frontCheck;
+  }
+  if (backCheck !== null) return backCheck;
+
+  // check threats of type E
+  // slice of size 6
+  const hasOpenEnds =
+    windowContent[0] === Cell.EMPTY && windowContent[5] === Cell.EMPTY;
+  if (hasOpenEnds) {
+    const r = windowContent[1];
+    const occupyNearEnds =
+      r !== Cell.EMPTY &&
+      windowContent[4] !== Cell.EMPTY &&
+      r === windowContent[4];
+
+    if (occupyNearEnds) {
+      if (windowContent[2] === r || windowContent[3] === r) {
+        if (r === Cell.BLACK) return 1;
+        else if (r === Cell.WHITE) return -1;
+      }
+    }
+  }
+  return 0;
 };
