@@ -70,7 +70,7 @@ export const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, 
 }
 
 export const getWindowContent = (key: WindowID, board: Board) => {
-  const dir = key[1] === 0 ? [1, 1] : key[1] === 1 ? [0, 1] : [1, 0];
+  const dir = key[1] === 0 ? [1, 1] : key[1] === 1 ? [0, 1] : key[1] === -1 ? [1, 0] : [1, -1];
   const cells: Cell[] = [];
   const [i, j] = key[0];
   for (let k = 0; k < WINDOW_SIZE; ++k) {
