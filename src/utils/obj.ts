@@ -1,4 +1,4 @@
-import { ThreatsMap } from "@/logic/board";
+import { ThreatsMap } from "@/logic/threats";
 
 export const areThreatMapsEqual = (a: ThreatsMap, b: ThreatsMap): boolean => {
   if (a.size !== b.size) return false;

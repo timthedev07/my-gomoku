@@ -1,5 +1,6 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove, terminal, proximityPrune, ThreatsMap, updateThreatsMap, Threat } from "./board";
+import { Point, Cell, Board, getSuccessors, Player, makeMove, terminal, proximityPrune } from "./board";
+import { Threat, ThreatsMap, updateThreatsMap } from "./threats";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
@@ -118,7 +119,6 @@ export const minimise = (board: Board, alpha: number, beta: number, depth: numbe
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.WHITE);
-    // TODO
     const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
     const [_, value] = maximise(newBoard, alpha, beta, depth - 1, updatedThreatsMap);
     if (value < minVal) {
