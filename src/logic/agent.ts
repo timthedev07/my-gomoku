@@ -1,11 +1,12 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove, checkWin, terminal, proximityPrune, numThreatsAtPoint, DIM } from "./board";
+import { Point, Cell, Board, getSuccessors, Player, makeMove, terminal, proximityPrune, ThreatsMap, updateThreatsMap } from "./board";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
   player: Player, // the player for which to suggest a move
+  threatsMap: ThreatsMap
 ) => {
-  return minimax(board, 3, player)[0];
+  return minimax(board, 3, player, threatsMap)[0];
 }
 
 
@@ -14,7 +15,7 @@ export const nextMove = (
  * Returns a score between -1 and 1
  * assumes a non-terminal board
  */
-const evaluation = (board: Board) => {
+const evaluation = (board: Board, threatsMap: ThreatsMap) => {
   // heuristic 1: average distance between stones
 
   // O(n^4) but we have a small n so it's okay, and the average case is much better
@@ -63,22 +64,6 @@ const evaluation = (board: Board) => {
   const blackCenter = averageDistanceToCenter(Cell.BLACK);
   const centerDiffTanh = Math.tanh(whiteCenter - blackCenter);
 
-  // heuristic 3: number of threats
-  const diffNumThreats = () => {
-    // i am aware that some threats are double or triple counted; fuck it
-    // what matters is the difference;
-    let [sB, sW] = [0, 0];
-    for (let i = 0; i < DIM; ++i) {
-      for (let j = 0; j < DIM; ++j) {
-        if (board[i][j] === Cell.EMPTY) {
-          const [a, b] = numThreatsAtPoint(board, [i, j]);
-          sB += a;
-          sW += b;
-        }
-      }
-    }
-    return sB + sW;
-  }
 
   const k = 1 / 3;
   // const diffThreatsTanh = Math.tanh(k * diffNumThreats());
@@ -100,22 +85,22 @@ export const tss = (board: Board, player: Player) => {
 
 }
 
-export const minimax = (board: Board, depth: number, player: Player) => {
+export const minimax = (board: Board, depth: number, player: Player, threatsMap: ThreatsMap) => {
   if (player === Cell.BLACK) {
-    return maximise(board, -Infinity, Infinity, depth);
+    return maximise(board, -Infinity, Infinity, depth, threatsMap);
   } else {
-    return minimise(board, -Infinity, Infinity, depth);
+    return minimise(board, -Infinity, Infinity, depth, threatsMap);
   }
 
 };
 
-export const minimise = (board: Board, alpha: number, beta: number, depth: number): [Point | null, number] => {
+export const minimise = (board: Board, alpha: number, beta: number, depth: number, threatsMap: ThreatsMap): [Point | null, number] => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
     return [null, winner];
   }
   if (depth === 0) {
-    return [null, evaluation(board)];
+    return [null, evaluation(board, threatsMap)];
   }
   const successors = getSuccessors(board, [proximityPrune]);
   let minVal = Infinity;
@@ -123,7 +108,9 @@ export const minimise = (board: Board, alpha: number, beta: number, depth: numbe
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.WHITE);
-    const [_, value] = maximise(newBoard, alpha, beta, depth - 1);
+    // TODO
+    const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
+    const [_, value] = maximise(newBoard, alpha, beta, depth - 1, updatedThreatsMap);
     if (value < minVal) {
       minVal = value;
       bestMove = successor;
@@ -138,13 +125,13 @@ export const minimise = (board: Board, alpha: number, beta: number, depth: numbe
   return [bestMove, minVal];
 };
 
-export const maximise: typeof minimise = (board, alpha, beta, depth) => {
+export const maximise: typeof minimise = (board, alpha, beta, depth, threatsMap) => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
     return [null, winner];
   }
   if (depth === 0) {
-    return [null, evaluation(board)];
+    return [null, evaluation(board, threatsMap)];
   }
   const successors = getSuccessors(board, [proximityPrune]);
   let maxVal = -Infinity;
@@ -152,7 +139,9 @@ export const maximise: typeof minimise = (board, alpha, beta, depth) => {
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.BLACK);
-    const [_, value] = minimise(newBoard, alpha, beta, depth - 1);
+    // TODO
+    const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
+    const [_, value] = minimise(newBoard, alpha, beta, depth - 1, updatedThreatsMap);
     if (value > maxVal) {
       maxVal = value;
       bestMove = successor;

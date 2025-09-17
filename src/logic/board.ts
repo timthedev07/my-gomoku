@@ -1,4 +1,3 @@
-import { longestSequenceAlongDirection } from "@/utils/grid";
 
 export type Board = Cell[][];
 export const DIM = 15;
@@ -22,6 +21,8 @@ export interface Threat {
   window: WindowID
 }
 
+export type ThreatsMap = Map<string, Threat>; // key is `${startRow}_${startCol}_${direction}`
+
 export type Player = Cell.BLACK | Cell.WHITE;
 
 export type Point = [number, number];
@@ -42,7 +43,7 @@ export const getThreatMapKey = (window: WindowID) => {
  *
  * the board is assumed to be updated already by `action`
  */
-export const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, action: Point) => {
+export const updateThreatsMap = (threatsMap: ThreatsMap, board: Board, action: Point) => {
   const affectedWindows = getAllAffectedWindows(action);
 
   for (const window of affectedWindows) {
@@ -222,80 +223,6 @@ export const makeMove = (board: Board, action: Point, player: Player) => {
   return newBoard;
 };
 
-/**
- * Given an empty point, it returns [b, w]
- * where b is the number of black threats at that point
- * and w is the number of white threats at that point
- */
-export const numThreatsAtPoint = (board: Board, point: Point): Point => {
-  const res = [0, 0] as Point;
-  const [row, col] = point;
-
-  for (const direction of ALL_DIRECTIONS) {
-    // Types A and B: open four (xxxx_) or (_xxxx_)
-    const l = longestSequenceAlongDirection(board, point, direction, true);
-    if (Math.abs(l) >= 4) {
-      if (l > 0) ++res[0];
-      else ++res[1];
-      continue;
-    }
-
-    // Type C: three 
-    if (Math.abs(l) === 3) {
-      // is free 3
-      try {
-        if (board[row + 4 * direction[0]][col + 4 * direction[1]] === Cell.EMPTY) {
-          if (l > 0) ++res[0];
-          else ++res[1];
-        }
-      } catch {
-      }
-      continue;
-    }
-    // Type D: _xxx__
-    if (l === 0) {
-      const l2 = longestSequenceAlongDirection(board, [row - direction[0], col - direction[1]], direction, false);
-      if (Math.abs(l2) === 3) {
-        if (l > 0) ++res[0];
-        else ++res[1];
-      }
-      continue;
-    }
-
-    // Type E: _x_xx_
-    // i'll just hard code it lol
-    try {
-      if (board[row + 2 * direction[0]][col + 2 * direction[1]] === Cell.EMPTY) {
-        const r = board[row + direction[0]][col + direction[1]];
-        if (r !== Cell.EMPTY &&
-          r === board[row + 3 * direction[0]][col + 3 * direction[1]] &&
-          r === board[row + 4 * direction[0]][col + 4 * direction[1]]) {
-          if (r === Cell.BLACK) ++res[0];
-          else if (r === Cell.WHITE) ++res[1];
-        }
-        continue;
-      }
-
-      const _k = board[row - direction[0]][col - direction[1]];
-      if (_k !== Cell.EMPTY) {
-        if (_k === board[row + direction[0]][col + direction[1]] &&
-          _k === board[row + 2 * direction[0]][col + 2 * direction[1]]) {
-          if (_k === Cell.BLACK) ++res[0];
-          else if (_k === Cell.WHITE) ++res[1];
-        } else if (_k === board[row - 2 * direction[0]][col - 2 * direction[1]] &&
-          _k === board[row - 4 * direction[0]][col - 4 * direction[1]]) {
-          if (_k === Cell.BLACK) ++res[0];
-          else if (_k === Cell.WHITE) ++res[1];
-        }
-      }
-
-    } catch {
-
-    }
-
-  }
-  return res;
-}
 
 /**
  * If there is a winner, return it; otherwise return 0
