@@ -1,12 +1,12 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove, terminal, proximityPrune, ThreatsMap, updateThreatsMap } from "./board";
+import { Point, Cell, Board, getSuccessors, Player, makeMove, terminal, proximityPrune, ThreatsMap, updateThreatsMap, Threat } from "./board";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
   player: Player, // the player for which to suggest a move
   threatsMap: ThreatsMap
 ) => {
-  return minimax(board, 3, player, threatsMap)[0];
+  return minimax(board, 3, player, new Map(threatsMap))[0];
 }
 
 
@@ -15,7 +15,7 @@ export const nextMove = (
  * Returns a score between -1 and 1
  * assumes a non-terminal board
  */
-const evaluation = (board: Board, threatsMap: ThreatsMap) => {
+export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
   // heuristic 1: average distance between stones
 
   // O(n^4) but we have a small n so it's okay, and the average case is much better
@@ -66,11 +66,20 @@ const evaluation = (board: Board, threatsMap: ThreatsMap) => {
 
 
   const k = 1 / 3;
-  // const diffThreatsTanh = Math.tanh(k * diffNumThreats());
+  let blackThreats = 0;
+  let whiteThreats = 0;
+  for (const threat of threatsMap.values()) {
+    if (threat.player === Cell.BLACK) {
+      blackThreats++;
+    } else if (threat.player === Cell.WHITE) {
+      whiteThreats++;
+    }
+  }
+  const diffThreatsTanh = Math.tanh(k * (blackThreats - whiteThreats));
 
 
-  const weights = [0.4, 0.6];
-  const scores = [centerDiffTanh, distAvgDiffTanh];
+  const weights = [0.1, 0.2, 0.7];
+  const scores = [centerDiffTanh, distAvgDiffTanh, diffThreatsTanh];
 
 
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
@@ -80,9 +89,8 @@ const evaluation = (board: Board, threatsMap: ThreatsMap) => {
 // if no explicit winning sequence is found
 // it will then attempt to connect independent threats into a winning sequence
 // if all else fails, it will return null;
-export const tss = (board: Board, player: Player) => {
-  const successors = getSuccessors(board, [proximityPrune]);
-
+export const tss = (board: Board, player: Player, threatsMap: ThreatsMap) => {
+  const userThreats: Set<Threat> = new Set();
 }
 
 export const minimax = (board: Board, depth: number, player: Player, threatsMap: ThreatsMap) => {
@@ -105,6 +113,8 @@ export const minimise = (board: Board, alpha: number, beta: number, depth: numbe
   const successors = getSuccessors(board, [proximityPrune]);
   let minVal = Infinity;
   let bestMove: Point | null = null;
+
+  const tssResult = tss(board, Cell.WHITE, threatsMap);
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.WHITE);

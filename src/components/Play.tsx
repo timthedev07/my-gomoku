@@ -1,4 +1,4 @@
-import { nextMove } from "@/logic/agent";
+import { evaluation, nextMove } from "@/logic/agent";
 import {
   Player,
   getInitialBoard,
@@ -6,10 +6,11 @@ import {
   makeMove,
   Cell,
   DIM,
-  numThreatsAtPoint,
-  Threat,
   updateThreatsMap,
+  ThreatsMap,
+  Point,
 } from "@/logic/board";
+import { areThreatMapsEqual } from "@/utils/obj";
 import {
   useState,
   FC,
@@ -36,17 +37,17 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [prevBoard, setPrevBoard] = useState<number[][] | null>(null);
   const [isTerminal, setIsTerminal] = useState<boolean>(false);
   const [winner, setWinner] = useState<Player | null>(null);
-  const [threatsMap, setThreatsMap] = useState<Map<string, Threat>>(new Map());
+  const [threatsMap, setThreatsMap] = useState<ThreatsMap>(new Map());
+  const [prevThreatsMap, setPrevThreatsMap] = useState<ThreatsMap>(new Map());
 
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {
       setBoard((b) => {
-        const newBoard = makeMove(
-          b,
-          [Math.floor(DIM / 2), Math.floor(DIM / 2)],
-          Cell.BLACK
-        );
+        const move = [Math.floor(DIM / 2), Math.floor(DIM / 2)] as Point;
+        const newBoard = makeMove(b, move, Cell.BLACK);
         setPrevBoard(newBoard);
+        const updatedThreatsMap = updateThreatsMap(new Map(), newBoard, move);
+        setPrevThreatsMap(updatedThreatsMap);
         return newBoard;
       });
     }
@@ -59,19 +60,27 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
       if (
         cancelled ||
         !userPlayer ||
+        !areThreatMapsEqual(prevThreatsMap, threatsMap) ||
         JSON.stringify(prevBoard) === JSON.stringify(board) ||
         JSON.stringify(board) === JSON.stringify(getInitialBoard())
       )
         return;
       setBoard((b) => {
-        const aiMove = nextMove(b, -userPlayer);
+        const aiMove = nextMove(b, -userPlayer, threatsMap);
         if (!aiMove) {
           return b;
         }
+        // console.log("MAKING FUCKING AI MOVE", threatsMap)
         const aiBoard = makeMove(b, aiMove, -userPlayer);
         setPrevBoard(aiBoard);
-        setThreatsMap(m => {
-          return updateThreatsMap(m, aiBoard, aiMove as [number, number]);
+        setThreatsMap((m) => {
+          const updated = updateThreatsMap(
+            m,
+            aiBoard,
+            aiMove as [number, number]
+          );
+          setPrevThreatsMap(updated);
+          return updated;
         });
         return aiBoard;
       });
@@ -82,7 +91,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
     return () => {
       cancelled = true;
     };
-  }, [board, prevBoard, userPlayer]);
+  }, [board, prevBoard, userPlayer, threatsMap, prevThreatsMap]);
 
   if (!userPlayer) return <></>;
 
@@ -111,7 +120,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
           }}
           className={`z-10 absolute w-full h-full grid`}
         >
-
           {iter.map((_, i) => (
             <Fragment key={i}>
               {iter.map((_, j) => (
@@ -131,8 +139,11 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                       const newBoard = makeMove(b, [i, j], userPlayer);
                       const [_isTerminal, _winner] = terminal(newBoard);
                       setIsTerminal(_isTerminal);
-                      setThreatsMap(m => {
-                        const updatedMap = updateThreatsMap(m, newBoard, [i, j] as [number, number]);
+                      setThreatsMap((m) => {
+                        const updatedMap = updateThreatsMap(m, newBoard, [
+                          i,
+                          j,
+                        ] as [number, number]);
                         return updatedMap;
                       });
                       if (_isTerminal && _winner !== Cell.EMPTY) {
@@ -140,7 +151,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                       }
                       return newBoard;
                     });
-
                   }}
                   disabled={isTerminal || board[i][j] !== Cell.EMPTY}
                 >
