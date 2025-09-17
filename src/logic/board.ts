@@ -64,7 +64,6 @@ export const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, 
       }
     }
   }
-  console.log(threatsMap);
 
   return threatsMap;
 }
