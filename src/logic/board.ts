@@ -1,3 +1,5 @@
+import { argv0 } from "process";
+
 export type Board = Cell[][];
 export const DIM = 15;
 export const WINDOW_SIZE = 6;
@@ -195,4 +197,17 @@ export const terminal = (board: Board): [boolean, Cell] => {
     }
   }
   return [true, 0]; // draw
+};
+
+/**
+ * Expects a number between -1 and 2 incl.
+ */
+export const directionKeyToVec = (dirKey: number): Point => {
+  return dirKey === 0
+    ? [1, 1]
+    : dirKey === 1
+      ? [0, 1]
+      : dirKey === -1
+        ? [1, 0]
+        : [1, -1];
 };
