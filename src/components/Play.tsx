@@ -8,6 +8,7 @@ import {
   DIM,
   numThreatsAtPoint,
   Threat,
+  updateThreatsMap,
 } from "@/logic/board";
 import {
   useState,
@@ -69,6 +70,9 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         }
         const aiBoard = makeMove(b, aiMove, -userPlayer);
         setPrevBoard(aiBoard);
+        setThreatsMap(m => {
+          return updateThreatsMap(m, aiBoard, aiMove as [number, number]);
+        });
         return aiBoard;
       });
     };
@@ -94,6 +98,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
             ? "White wins!"
             : "It's a draw!"}
       </div>
+
       <div
         id="board"
         className="relative mx-auto flex items-center justify-center"
@@ -106,6 +111,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
           }}
           className={`z-10 absolute w-full h-full grid`}
         >
+
           {iter.map((_, i) => (
             <Fragment key={i}>
               {iter.map((_, j) => (
@@ -120,15 +126,21 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                   key={`${i}-${j}`}
                   onClick={() => {
                     if (!userPlayer) return;
+
                     setBoard((b) => {
                       const newBoard = makeMove(b, [i, j], userPlayer);
                       const [_isTerminal, _winner] = terminal(newBoard);
                       setIsTerminal(_isTerminal);
+                      setThreatsMap(m => {
+                        const updatedMap = updateThreatsMap(m, newBoard, [i, j] as [number, number]);
+                        return updatedMap;
+                      });
                       if (_isTerminal && _winner !== Cell.EMPTY) {
                         setWinner(_winner);
                       }
                       return newBoard;
                     });
+
                   }}
                   disabled={isTerminal || board[i][j] !== Cell.EMPTY}
                 >
@@ -147,6 +159,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
             </Fragment>
           ))}
         </div>
+
         <Stage width={BOARD_PIXEL_SIZE} height={BOARD_PIXEL_SIZE} className="">
           <Layer>
             {iter.map((_, i) => (

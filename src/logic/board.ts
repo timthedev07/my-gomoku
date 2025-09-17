@@ -2,7 +2,7 @@ import { longestSequenceAlongDirection } from "@/utils/grid";
 
 export type Board = Cell[][];
 export const DIM = 15;
-export const WINDOW_SIZE = 7;
+export const WINDOW_SIZE = 6;
 export const ALL_DIRECTIONS: Point[] = [
   [0, 1],
   [1, 0],
@@ -14,7 +14,7 @@ export const ALL_DIRECTIONS: Point[] = [
   [-1, 1],
 ];
 
-export type WindowID = [Point, number]; // starting point and direction (0: diagonal, 1: horizontal, -1: vertical)
+export type WindowID = [Point, number]; // starting point and direction (0: diagonal, 1: horizontal, -1: vertical, 2: anti-diagonal)
 
 
 export interface Threat {
@@ -42,13 +42,13 @@ export const getThreatMapKey = (window: WindowID) => {
  *
  * the board is assumed to be updated already by `action`
  */
-const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, action: Point) => {
+export const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, action: Point) => {
   const affectedWindows = getAllAffectedWindows(action);
 
   for (const window of affectedWindows) {
     const key = getThreatMapKey(window);
     const windowContent = getWindowContent(window, board);
-    const hasThreat = windowHasThreat(windowContent);
+    const hasThreat = windowHasThreat(windowContent, window);
 
     if (threatsMap.has(key)) {
       // recompute the threat
@@ -64,12 +64,13 @@ const updateThreatsMap = (threatsMap: Map<string, Threat>, board: Board, action:
       }
     }
   }
+  console.log(threatsMap);
 
   return threatsMap;
 }
 
 export const getWindowContent = (key: WindowID, board: Board) => {
-  const dir = key[1] ? [1, 1] : [0, 1];
+  const dir = key[1] === 0 ? [1, 1] : key[1] === 1 ? [0, 1] : [1, 0];
   const cells: Cell[] = [];
   const [i, j] = key[0];
   for (let k = 0; k < WINDOW_SIZE; ++k) {
@@ -86,17 +87,22 @@ export const getAllAffectedWindows = (point: Point): WindowID[] => {
   const [row, col] = point;
   const windows: WindowID[] = [];
 
-  for (let i = row - WINDOW_SIZE + 1; i <= row; ++i) {
+  for (let i = Math.max(0, row - WINDOW_SIZE + 1); i <= Math.min(row, 9); ++i) {
     windows.push([[i, col], -1]);
   }
-  for (let j = col - WINDOW_SIZE + 1; j <= col; ++j) {
+  for (let j = Math.max(0, col - WINDOW_SIZE + 1); j <= Math.min(col, 9); ++j) {
     windows.push([[row, j], 1]);
   }
-  for (let k = -WINDOW_SIZE + 1; k <= 0; ++k) {
+  const K = -WINDOW_SIZE + 1;
+  const end = -(WINDOW_SIZE - Math.min(DIM - row, DIM - col));
+  for (let k = -Math.min(-K, row, col); k <= end; ++k) {
     windows.push([[row + k, col + k], 0]);
   }
+  const end2 = -(WINDOW_SIZE - Math.min(DIM - row, col + 1));
+  for (let k = -Math.min(-K, row, DIM - 1 - col); k <= end2; ++k) {
+    windows.push([[row + k, col - k], 2]);
+  }
   return windows;
-
 }
 /*
  * Given a window of length 7, return:
@@ -104,54 +110,55 @@ export const getAllAffectedWindows = (point: Point): WindowID[] => {
  *  -1 if there is a threat for white
  *  0 otherwise
  */
-export const windowHasThreat = (windowContent: Cell[]): number => {
+export const windowHasThreat = (windowContent: Cell[], window: WindowID): number => {
   // check threats of type A and B (4 in a row)
-  const n = windowContent.length; // we expect 6
-  for (let i = 0; i <= n - 6; ++i) {
-    const slice = windowContent.slice(i, i + 6);
-    const hasAnOpenEnd = slice[0] === Cell.EMPTY || slice[6] === Cell.EMPTY;
-    if (slice.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
-      if (hasAnOpenEnd) {
-        return 1;
-      }
-    } else if (slice.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
-      if (hasAnOpenEnd) {
-        return -1;
-      }
+  const hasAnOpenEnd = windowContent[0] === Cell.EMPTY || windowContent[6] === Cell.EMPTY;
+  if (windowContent.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
+    if (hasAnOpenEnd) {
+      return 1;
+    }
+  } else if (windowContent.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
+    if (hasAnOpenEnd) {
+      return -1;
     }
   }
   // check threats of type C and D (3 in a row with 2 open ends)
-  for (let i = 0; i <= n - 5; ++i) {
-    const slice = windowContent.slice(i, i + 5);
-    const hasOpenEnds = windowContent[i] === Cell.EMPTY && windowContent[i + 4] === Cell.EMPTY;
+  const openThreeCheck = (subwindow: Cell[]) => {
+    const hasOpenEnds = subwindow[0] === Cell.EMPTY && subwindow[4] === Cell.EMPTY;
 
-    if (slice.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
-      if (hasOpenEnds) {
-        return 1;
-      }
-    } else if (slice.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
-      if (hasOpenEnds) {
-        return -1;
-      }
+    if (!hasOpenEnds) return null;
+
+    if (subwindow.slice(1, -1).every((cell) => cell === Cell.BLACK)) {
+      return 1;
+    } else if (subwindow.slice(1, -1).every((cell) => cell === Cell.WHITE)) {
+      return -1;
     }
+
+    return null;
   }
+
+  const backCheck = openThreeCheck(windowContent.slice(1, 6));
+  // if window.start is at the edge of the board, also check the front
+  if (window[0][0] === 0 || window[0][1] === 0) {
+    const frontCheck = openThreeCheck(windowContent.slice(0, 5));
+    if (frontCheck !== null) return frontCheck;
+  }
+  if (backCheck !== null) return backCheck;
 
   // check threats of type E
   // slice of size 6
-  for (let i = 0; i <= n - 6; ++i) {
-    const slice = windowContent.slice(i, i + 6);
-    const hasOpenEnds = windowContent[i] === Cell.EMPTY && windowContent[i + 5] === Cell.EMPTY;
-    if (!hasOpenEnds) continue;
-    const r = slice[1];
+  const hasOpenEnds = windowContent[0] === Cell.EMPTY && windowContent[5] === Cell.EMPTY;
+  if (hasOpenEnds) {
+    const r = windowContent[1];
     const occupyNearEnds = (r !== Cell.EMPTY) &&
-      (slice[4] !== Cell.EMPTY) &&
-      (r === slice[4]);
+      (windowContent[4] !== Cell.EMPTY) &&
+      (r === windowContent[4]);
 
-    if (!occupyNearEnds) continue;
-
-    if (slice[2] === r || slice[3] === r) {
-      if (r === Cell.BLACK) return 1;
-      else if (r === Cell.WHITE) return -1;
+    if (occupyNearEnds) {
+      if (windowContent[2] === r || windowContent[3] === r) {
+        if (r === Cell.BLACK) return 1;
+        else if (r === Cell.WHITE) return -1;
+      }
     }
   }
   return 0;

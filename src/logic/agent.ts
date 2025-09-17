@@ -81,11 +81,11 @@ const evaluation = (board: Board) => {
   }
 
   const k = 1 / 3;
-  const diffThreatsTanh = Math.tanh(k * diffNumThreats());
+  // const diffThreatsTanh = Math.tanh(k * diffNumThreats());
 
 
-  const weights = [0.3, 0.7];
-  const scores = [centerDiffTanh, diffThreatsTanh];
+  const weights = [0.4, 0.6];
+  const scores = [centerDiffTanh, distAvgDiffTanh];
 
 
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
