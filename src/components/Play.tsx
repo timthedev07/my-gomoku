@@ -48,19 +48,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [prevThreatsMap, setPrevThreatsMap] = useState<ThreatsMap>(new Map());
   const [agentBuffer, setAgentBuffer] = useState<Point[]>([]);
 
-  // console.log(
-  //   tss(
-  //     exampleBoard,
-  //     Cell.BLACK,
-  //     new Map(),
-  //     getSuccessors(exampleBoard, [proximityPrune]),
-  //   ),
-  // );
-  const k = makeMove(exampleBoard, [0, 4], Cell.BLACK);
-  const w = [[0, 0] as Point, 1] as WindowID;
-  console.log(computeCostSquares(k, { player: Cell.BLACK, window: w }));
-  console.log(getWindowContent(w, k));
-
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {
       setBoard((b) => {
