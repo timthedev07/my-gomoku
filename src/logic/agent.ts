@@ -249,6 +249,11 @@ export const maximise: typeof minimise = (
   let maxVal = -Infinity;
   let bestMove: Point | null = null;
 
+  const tssResult = tss(board, Cell.BLACK, threatsMap, successors);
+  if (tssResult !== null) {
+    return [tssResult, -1];
+  }
+
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.BLACK);
     const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
