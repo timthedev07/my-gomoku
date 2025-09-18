@@ -9,7 +9,12 @@ import {
   terminal,
   proximityPrune,
 } from "./board";
-import { Threat, ThreatsMap, updateThreatsMap } from "./threats";
+import {
+  computeCostSquares,
+  Threat,
+  ThreatsMap,
+  updateThreatsMap,
+} from "./threats";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
@@ -93,17 +98,77 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
 };
 
+/*
+ * Pick a cost square that will be played by `oppponent`
+ */
+const pickCostSquare = (
+  costSquares: Point[],
+  board: Board,
+  threatsMap: ThreatsMap,
+  opponent: Player,
+) => {
+  // TODO
+  return costSquares[0];
+};
+
 // this searches through existing threats and attempts to find winning sequences
 // if no explicit winning sequence is found
 // it will then attempt to connect independent threats into a winning sequence
 // if all else fails, it will return null;
-export const tss = (board: Board, player: Player, threatsMap: ThreatsMap) => {
-  const userThreats: Set<Threat> = new Set();
-  for (const threat of threatsMap.values()) {
-    if (threat.player === player) {
-      userThreats.add(threat);
+export const tss = (
+  board: Board,
+  player: Player,
+  threatsMap: ThreatsMap,
+  successors: Point[],
+): Point[] | null => {
+  for (const successor of successors) {
+    const boardPostSucc = makeMove(board, successor, player);
+    const [isTerminal, winner] = terminal(boardPostSucc);
+    if (isTerminal && winner === player) {
+      return [successor];
+    }
+    if (isTerminal && winner === -player) {
+      continue;
+    }
+
+    const updatedThreatsMap = updateThreatsMap(
+      new Map(threatsMap),
+      boardPostSucc,
+      successor,
+    );
+    if (updatedThreatsMap.size === threatsMap.size) {
+      continue;
+    }
+
+    for (const [, v] of updatedThreatsMap) {
+      const costSquares = computeCostSquares(boardPostSucc, v);
+      const opponentMove = pickCostSquare(
+        costSquares,
+        boardPostSucc,
+        updatedThreatsMap,
+        -player,
+      );
+
+      const boardWithBlock = makeMove(boardPostSucc, opponentMove, -player);
+      const postBlockThreats = updateThreatsMap(
+        new Map(updatedThreatsMap),
+        boardWithBlock,
+        opponentMove,
+      );
+
+      const result = tss(
+        boardWithBlock,
+        player,
+        postBlockThreats,
+        getSuccessors(board, [proximityPrune]),
+      );
+
+      if (result !== null) {
+        return [successor, ...result];
+      }
     }
   }
+  return null;
 };
 
 export const minimax = (
@@ -125,7 +190,7 @@ export const minimise = (
   beta: number,
   depth: number,
   threatsMap: ThreatsMap,
-): [Point | null, number] => {
+): [null | Point[], number] => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
     return [null, winner];
@@ -137,12 +202,15 @@ export const minimise = (
   let minVal = Infinity;
   let bestMove: Point | null = null;
 
-  const tssResult = tss(board, Cell.WHITE, threatsMap);
+  const tssResult = tss(board, Cell.WHITE, threatsMap, successors);
+  if (tssResult !== null) {
+    return [tssResult, -1];
+  }
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.WHITE);
     const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
-    const [_, value] = maximise(
+    const [, value] = maximise(
       newBoard,
       alpha,
       beta,
@@ -160,7 +228,7 @@ export const minimise = (
     beta = Math.min(beta, value);
   }
 
-  return [bestMove, minVal];
+  return [bestMove ? [bestMove] : null, minVal];
 };
 
 export const maximise: typeof minimise = (
@@ -184,7 +252,7 @@ export const maximise: typeof minimise = (
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.BLACK);
     const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
-    const [_, value] = minimise(
+    const [, value] = minimise(
       newBoard,
       alpha,
       beta,
@@ -202,7 +270,7 @@ export const maximise: typeof minimise = (
     alpha = Math.max(alpha, value);
   }
 
-  return [bestMove, maxVal];
+  return [bestMove ? [bestMove] : null, maxVal];
 };
 
 // for testing; from the paper
