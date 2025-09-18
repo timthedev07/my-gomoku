@@ -251,7 +251,7 @@ export const maximise: typeof minimise = (
 
   const tssResult = tss(board, Cell.BLACK, threatsMap, successors);
   if (tssResult !== null) {
-    return [tssResult, -1];
+    return [tssResult, 1];
   }
 
   for (const successor of successors) {

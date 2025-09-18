@@ -1,5 +1,9 @@
-import { nextMove } from "@/logic/agent";
-import { ThreatsMap, updateThreatsMap } from "@/logic/threats";
+import { exampleBoard, nextMove, tss } from "@/logic/agent";
+import {
+  computeCostSquares,
+  ThreatsMap,
+  updateThreatsMap,
+} from "@/logic/threats";
 import {
   Player,
   getInitialBoard,
@@ -8,6 +12,10 @@ import {
   Cell,
   DIM,
   Point,
+  getSuccessors,
+  proximityPrune,
+  getWindowContent,
+  WindowID,
 } from "@/logic/board";
 import { areThreatMapsEqual } from "@/utils/obj";
 import {
@@ -38,6 +46,20 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [threatsMap, setThreatsMap] = useState<ThreatsMap>(new Map());
   const [prevThreatsMap, setPrevThreatsMap] = useState<ThreatsMap>(new Map());
+  const [agentBuffer, setAgentBuffer] = useState<Point[]>([]);
+
+  // console.log(
+  //   tss(
+  //     exampleBoard,
+  //     Cell.BLACK,
+  //     new Map(),
+  //     getSuccessors(exampleBoard, [proximityPrune]),
+  //   ),
+  // );
+  const k = makeMove(exampleBoard, [0, 4], Cell.BLACK);
+  const w = [[0, 0] as Point, 1] as WindowID;
+  console.log(computeCostSquares(k, { player: Cell.BLACK, window: w }));
+  console.log(getWindowContent(w, k));
 
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {
@@ -65,20 +87,39 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
       )
         return;
       setBoard((b) => {
+        // if found winning sequence in buffer, play it
+        if (agentBuffer.length > 0) {
+          const move = agentBuffer[0];
+          const newBoard = makeMove(b, move, -userPlayer);
+          setAgentBuffer((buf) => buf.slice(1));
+          setPrevBoard(newBoard);
+          setThreatsMap((m) => {
+            const updated = updateThreatsMap(
+              m,
+              newBoard,
+              move as [number, number],
+            );
+            setPrevThreatsMap(updated);
+            return updated;
+          });
+          return newBoard;
+        }
+
         const aiMove = nextMove(b, -userPlayer, threatsMap);
         if (!aiMove) {
           return b;
         }
-        // console.log("MAKING FUCKING AI MOVE", threatsMap)
-        const aiBoard = makeMove(b, aiMove, -userPlayer);
+
+        if (aiMove.length > 1) {
+          setAgentBuffer(aiMove.slice(1));
+        }
+        const nextAgentMove = aiMove[0];
+
+        const aiBoard = makeMove(b, nextAgentMove, -userPlayer);
         setPrevBoard(aiBoard);
 
         setThreatsMap((m) => {
-          const updated = updateThreatsMap(
-            m,
-            aiBoard,
-            aiMove as [number, number],
-          );
+          const updated = updateThreatsMap(m, aiBoard, nextAgentMove);
           setPrevThreatsMap(updated);
           return updated;
         });
@@ -91,7 +132,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
     return () => {
       cancelled = true;
     };
-  }, [board, prevBoard, userPlayer, threatsMap, prevThreatsMap]);
+  }, [board, prevBoard, userPlayer, threatsMap, prevThreatsMap, agentBuffer]);
 
   if (!userPlayer) return <></>;
 
