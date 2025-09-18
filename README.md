@@ -13,6 +13,12 @@ We have the following types of threats (Allis, 1994):
 
 ![img](mdassets/1.png)
 
+In addition to the above, we define a threat of type F to be one that has a broken four, e.g.
+
+- XX_XX
+- X_XXX
+- XXX_X
+
 ## Reducing the Search Space
 
 Consider forced moves: Suppose we have an immediate threat, such as an unblocked three, then, we should prioritise the subsequent moves that result from the opponent blocking that threat in all possible ways. Or, suppose we have a threat of four, then we can just consider what happens after the opponent blocks that threat, because we know the opponent must take that move.
