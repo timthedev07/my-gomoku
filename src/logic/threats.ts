@@ -197,7 +197,7 @@ export const computeCostSquares = (board: Board, threat: Threat) => {
     // if at the edge, check both front and end
     // this should exclude type D
     if (
-      windowContent[5] === Cell.EMPTY &&
+      windowContent[4] === Cell.EMPTY &&
       windowContent[0] === Cell.EMPTY &&
       windowContent.slice(1, 4).every((cell) => cell === threat.player)
     ) {
