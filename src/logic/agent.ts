@@ -1,16 +1,23 @@
 import { distance } from "@/utils/grid";
-import { Point, Cell, Board, getSuccessors, Player, makeMove, terminal, proximityPrune } from "./board";
+import {
+  Point,
+  Cell,
+  Board,
+  getSuccessors,
+  Player,
+  makeMove,
+  terminal,
+  proximityPrune,
+} from "./board";
 import { Threat, ThreatsMap, updateThreatsMap } from "./threats";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
   player: Player, // the player for which to suggest a move
-  threatsMap: ThreatsMap
+  threatsMap: ThreatsMap,
 ) => {
   return minimax(board, 3, player, new Map(threatsMap))[0];
-}
-
-
+};
 
 /**
  * Returns a score between -1 and 1
@@ -38,8 +45,8 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
       }
     }
     const n = points.length;
-    return sum / Math.max(1, n * (n - 1) / 2);
-  }
+    return sum / Math.max(1, (n * (n - 1)) / 2);
+  };
 
   const whiteAvg = averageDistance(Cell.WHITE);
   const blackAvg = averageDistance(Cell.BLACK);
@@ -48,7 +55,10 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
 
   // heuristic 2: center control
   const averageDistanceToCenter = (player: Player) => {
-    const center: [number, number] = [(board.length - 1) / 2, (board.length - 1) / 2];
+    const center: [number, number] = [
+      (board.length - 1) / 2,
+      (board.length - 1) / 2,
+    ];
     let sum = 0;
     let count = 0;
     for (let i = 0; i < board.length; ++i) {
@@ -60,11 +70,10 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
       }
     }
     return sum / Math.max(1, count);
-  }
+  };
   const whiteCenter = averageDistanceToCenter(Cell.WHITE);
   const blackCenter = averageDistanceToCenter(Cell.BLACK);
   const centerDiffTanh = Math.tanh(whiteCenter - blackCenter);
-
 
   const k = 1 / 3;
   let blackThreats = 0;
@@ -78,13 +87,11 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
   }
   const diffThreatsTanh = Math.tanh(k * (blackThreats - whiteThreats));
 
-
   const weights = [0.1, 0.2, 0.7];
   const scores = [centerDiffTanh, distAvgDiffTanh, diffThreatsTanh];
 
-
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
-}
+};
 
 // this searches through existing threats and attempts to find winning sequences
 // if no explicit winning sequence is found
@@ -92,18 +99,33 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
 // if all else fails, it will return null;
 export const tss = (board: Board, player: Player, threatsMap: ThreatsMap) => {
   const userThreats: Set<Threat> = new Set();
-}
+  for (const threat of threatsMap.values()) {
+    if (threat.player === player) {
+      userThreats.add(threat);
+    }
+  }
+};
 
-export const minimax = (board: Board, depth: number, player: Player, threatsMap: ThreatsMap) => {
+export const minimax = (
+  board: Board,
+  depth: number,
+  player: Player,
+  threatsMap: ThreatsMap,
+) => {
   if (player === Cell.BLACK) {
     return maximise(board, -Infinity, Infinity, depth, threatsMap);
   } else {
     return minimise(board, -Infinity, Infinity, depth, threatsMap);
   }
-
 };
 
-export const minimise = (board: Board, alpha: number, beta: number, depth: number, threatsMap: ThreatsMap): [Point | null, number] => {
+export const minimise = (
+  board: Board,
+  alpha: number,
+  beta: number,
+  depth: number,
+  threatsMap: ThreatsMap,
+): [Point | null, number] => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
     return [null, winner];
@@ -120,7 +142,13 @@ export const minimise = (board: Board, alpha: number, beta: number, depth: numbe
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.WHITE);
     const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
-    const [_, value] = maximise(newBoard, alpha, beta, depth - 1, updatedThreatsMap);
+    const [_, value] = maximise(
+      newBoard,
+      alpha,
+      beta,
+      depth - 1,
+      updatedThreatsMap,
+    );
     if (value < minVal) {
       minVal = value;
       bestMove = successor;
@@ -135,7 +163,13 @@ export const minimise = (board: Board, alpha: number, beta: number, depth: numbe
   return [bestMove, minVal];
 };
 
-export const maximise: typeof minimise = (board, alpha, beta, depth, threatsMap) => {
+export const maximise: typeof minimise = (
+  board,
+  alpha,
+  beta,
+  depth,
+  threatsMap,
+) => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
     return [null, winner];
@@ -149,9 +183,14 @@ export const maximise: typeof minimise = (board, alpha, beta, depth, threatsMap)
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.BLACK);
-    // TODO
     const updatedThreatsMap = updateThreatsMap(threatsMap, newBoard, successor);
-    const [_, value] = minimise(newBoard, alpha, beta, depth - 1, updatedThreatsMap);
+    const [_, value] = minimise(
+      newBoard,
+      alpha,
+      beta,
+      depth - 1,
+      updatedThreatsMap,
+    );
     if (value > maxVal) {
       maxVal = value;
       bestMove = successor;
@@ -164,5 +203,23 @@ export const maximise: typeof minimise = (board, alpha, beta, depth, threatsMap)
   }
 
   return [bestMove, maxVal];
-
 };
+
+// for testing; from the paper
+export const exampleBoard: Board = [
+  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+  [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+];
