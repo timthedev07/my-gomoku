@@ -79,6 +79,49 @@ const isTypeEThreat = (windowContent: Cell[]): Cell => {
 };
 
 /*
+ * Returns [threateningPlayer, costSquare]
+ */
+const isTypeFThreat = (
+  windowContent: Cell[],
+  window: WindowID,
+): [Cell, Point | null] => {
+  const [i, j] = window[0];
+  const dir = dirKeyToVec(window[1]);
+
+  const findPattern = (
+    start: number,
+    end: number,
+  ): ReturnType<typeof isTypeFThreat> => {
+    const subwindow = windowContent.slice(start, end);
+    // front check only if at edge
+    const s = subwindow[0];
+    const occupyEnds = s === subwindow[4] && s !== Cell.EMPTY;
+    if (occupyEnds) {
+      if (
+        subwindow[2] === Cell.EMPTY &&
+        subwindow[1] === s &&
+        subwindow[3] === s
+      ) {
+        return [s, [i + (start + 2) * dir[0], j + (start + 2) * dir[1]]];
+      } else if (subwindow[2] === s) {
+        if (subwindow[1] === Cell.EMPTY && subwindow[3] === s) {
+          return [s, [i + (start + 1) * dir[0], j + (start + 1) * dir[1]]];
+        } else if (subwindow[1] === s && subwindow[3] === Cell.EMPTY) {
+          return [s, [i + (start + 3) * dir[0], j + (start + 3) * dir[1]]];
+        }
+      }
+    }
+    return [Cell.EMPTY, null];
+  };
+  if (i === 0 || j === 0) {
+    const [a, b] = findPattern(0, 5);
+    if (a !== Cell.EMPTY) return [a, b];
+  }
+
+  return findPattern(1, 6);
+};
+
+/*
  * Given a window of length 7, return:
  *  1 if there is a threat for black
  *  -1 if there is a threat for white
@@ -198,6 +241,16 @@ export const computeCostSquares = (board: Board, threat: Threat) => {
     } else {
       costSquares.push([i + 3 * dir[0], j + 3 * dir[1]]);
     }
+    return costSquares;
   }
+
+  const [threatPlayer, costSquare] = isTypeFThreat(
+    windowContent,
+    threat.window,
+  );
+  if (threatPlayer === threat.player && !!costSquare) {
+    costSquares.push(costSquare);
+  }
+
   return costSquares;
 };
