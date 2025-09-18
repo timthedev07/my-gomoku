@@ -202,7 +202,7 @@ export const terminal = (board: Board): [boolean, Cell] => {
 /**
  * Expects a number between -1 and 2 incl.
  */
-export const directionKeyToVec = (dirKey: number): Point => {
+export const dirKeyToVec = (dirKey: number): Point => {
   return dirKey === 0
     ? [1, 1]
     : dirKey === 1
