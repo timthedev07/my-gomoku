@@ -169,7 +169,13 @@ export const windowHasThreat = (
 
   // check threats of type E
   // slice of size 6
-  return isTypeEThreat(windowContent);
+  const e = isTypeEThreat(windowContent);
+  if (e !== 0) return e;
+
+  const [f] = isTypeFThreat(windowContent, window);
+  if (f !== Cell.EMPTY) return f;
+
+  return Cell.EMPTY;
 };
 
 /**
