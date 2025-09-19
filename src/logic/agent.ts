@@ -9,12 +9,7 @@ import {
   terminal,
   proximityPrune,
 } from "./board";
-import {
-  computeCostSquares,
-  Threat,
-  ThreatsMap,
-  updateThreatsMap,
-} from "./threats";
+import { computeCostSquares, ThreatsMap, updateThreatsMap } from "./threats";
 
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
@@ -140,8 +135,11 @@ export const tss = (
       continue;
     }
 
-    for (const [, v] of updatedThreatsMap) {
+    for (const [k, v] of updatedThreatsMap) {
       const costSquares = computeCostSquares(boardPostSucc, v);
+      if (!costSquares.length) {
+        updatedThreatsMap.delete(k);
+      }
       const opponentMove = pickCostSquare(
         costSquares,
         boardPostSucc,
