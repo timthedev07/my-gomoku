@@ -63,10 +63,7 @@ const isTypeEThreat = (windowContent: Cell[]): Cell => {
     windowContent[0] === Cell.EMPTY && windowContent[5] === Cell.EMPTY;
   if (hasOpenEnds) {
     const r = windowContent[1];
-    const occupyNearEnds =
-      r !== Cell.EMPTY &&
-      windowContent[4] !== Cell.EMPTY &&
-      r === windowContent[4];
+    const occupyNearEnds = r !== Cell.EMPTY && r === windowContent[4];
 
     if (occupyNearEnds) {
       if (windowContent[2] === r || windowContent[3] === r) {
