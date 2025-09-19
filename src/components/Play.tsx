@@ -1,9 +1,5 @@
-import { exampleBoard, nextMove, tss } from "@/logic/agent";
-import {
-  computeCostSquares,
-  ThreatsMap,
-  updateThreatsMap,
-} from "@/logic/threats";
+import { nextMove } from "@/logic/agent";
+import { ThreatsMap, updateThreatsMap } from "@/logic/threats";
 import {
   Player,
   getInitialBoard,
@@ -12,10 +8,6 @@ import {
   Cell,
   DIM,
   Point,
-  getSuccessors,
-  proximityPrune,
-  getWindowContent,
-  WindowID,
 } from "@/logic/board";
 import { areThreatMapsEqual } from "@/utils/obj";
 import {
