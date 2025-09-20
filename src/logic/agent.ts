@@ -87,7 +87,7 @@ export const evaluation = (board: Board, threatsMap: ThreatsMap) => {
   }
   const diffThreatsTanh = Math.tanh(k * (blackThreats - whiteThreats));
 
-  const weights = [0.1, 0.2, 0.7];
+  const weights = [0.2, 0.3, 0.5];
   const scores = [centerDiffTanh, distAvgDiffTanh, diffThreatsTanh];
 
   return weights.map((w, i) => w * scores[i]).reduce((a, b) => a + b, 0);
@@ -200,10 +200,12 @@ export const minimise = (
   let minVal = Infinity;
   let bestMove: Point | null = null;
 
-  const tssResult = tss(board, Cell.WHITE, threatsMap, successors);
-  if (tssResult !== null) {
-    return [tssResult, -1];
-  }
+  try {
+    const tssResult = tss(board, Cell.WHITE, threatsMap, successors);
+    if (tssResult !== null) {
+      return [tssResult, -1];
+    }
+  } catch {}
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.WHITE);
@@ -247,10 +249,12 @@ export const maximise: typeof minimise = (
   let maxVal = -Infinity;
   let bestMove: Point | null = null;
 
-  const tssResult = tss(board, Cell.BLACK, threatsMap, successors);
-  if (tssResult !== null) {
-    return [tssResult, 1];
-  }
+  try {
+    const tssResult = tss(board, Cell.BLACK, threatsMap, successors);
+    if (tssResult !== null) {
+      return [tssResult, 1];
+    }
+  } catch {}
 
   for (const successor of successors) {
     const newBoard = makeMove(board, successor, Cell.BLACK);

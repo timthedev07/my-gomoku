@@ -20,6 +20,7 @@ import {
 } from "react";
 import { Stage, Layer, Line, Circle } from "react-konva";
 import colors from "tailwindcss/colors";
+import { hardcodedOpenings, OpeningNode } from "@/logic/openings";
 
 const CELL_SIZE = 40; // pixels
 const BOARD_PIXEL_SIZE = (DIM - 1) * CELL_SIZE;
@@ -39,6 +40,9 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [threatsMap, setThreatsMap] = useState<ThreatsMap>(new Map());
   const [prevThreatsMap, setPrevThreatsMap] = useState<ThreatsMap>(new Map());
   const [agentBuffer, setAgentBuffer] = useState<Point[]>([]);
+  const [openingTree, setOpeningTree] = useState<OpeningNode | null>(
+    new OpeningNode([-1, -1], [hardcodedOpenings]),
+  );
 
   useEffect(() => {
     if (userPlayer === Cell.WHITE) {
@@ -52,6 +56,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
       });
     }
   }, [userPlayer]);
+  console.log("buffered", agentBuffer);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,9 +70,11 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         JSON.stringify(board) === JSON.stringify(getInitialBoard())
       )
         return;
+
       setBoard((b) => {
         // if found winning sequence in buffer, play it
         if (agentBuffer.length > 0) {
+          console.log("using buffered moves");
           const move = agentBuffer[0];
           const newBoard = makeMove(b, move, -userPlayer);
           setAgentBuffer((buf) => buf.slice(1));
@@ -82,6 +89,29 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
             return updated;
           });
           return newBoard;
+        } else if (!!openingTree) {
+          console.log("using hardcoded moves");
+          // or if hard coded moves exist
+          const children = openingTree.getChildren();
+          if (children.length > 0) {
+            const randInd = Math.floor(Math.random() * children.length);
+            const move = children[randInd].getMove();
+            const newBoard = makeMove(b, move, -userPlayer);
+            setOpeningTree(children[randInd]);
+            setPrevBoard(newBoard);
+            setThreatsMap((m) => {
+              const updated = updateThreatsMap(
+                m,
+                newBoard,
+                move as [number, number],
+              );
+              setPrevThreatsMap(updated);
+              return updated;
+            });
+            return newBoard;
+          } else {
+            setOpeningTree(null);
+          }
         }
 
         const aiMove = nextMove(b, -userPlayer, threatsMap);
@@ -90,6 +120,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         }
 
         if (aiMove.length > 1) {
+          console.log(aiMove);
           setAgentBuffer(aiMove.slice(1));
         }
         const nextAgentMove = aiMove[0];
@@ -99,6 +130,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
 
         setThreatsMap((m) => {
           const updated = updateThreatsMap(m, aiBoard, nextAgentMove);
+          console.log("Updated Threats Map after ai move:", updated);
           setPrevThreatsMap(updated);
           return updated;
         });
@@ -156,6 +188,21 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
                   key={`${i}-${j}`}
                   onClick={() => {
                     if (!userPlayer) return;
+
+                    if (!!openingTree) {
+                      let found = false;
+                      for (const child of openingTree.getChildren()) {
+                        const [x, y] = child.getMove();
+                        if (x === i && y === j) {
+                          setOpeningTree(child);
+                          found = true;
+                          break;
+                        }
+                      }
+                      if (!found) {
+                        setOpeningTree(null);
+                      }
+                    }
 
                     setBoard((b) => {
                       const newBoard = makeMove(b, [i, j], userPlayer);
