@@ -1,5 +1,3 @@
-import { argv0 } from "process";
-
 export type Board = Cell[][];
 export const DIM = 15;
 export const WINDOW_SIZE = 6;
@@ -31,10 +29,10 @@ export const getWindowContent = (key: WindowID, board: Board) => {
     key[1] === 0
       ? [1, 1]
       : key[1] === 1
-        ? [0, 1]
-        : key[1] === -1
-          ? [1, 0]
-          : [1, -1];
+      ? [0, 1]
+      : key[1] === -1
+      ? [1, 0]
+      : [1, -1];
   const cells: Cell[] = [];
   const [i, j] = key[0];
   for (let k = 0; k < WINDOW_SIZE; ++k) {
@@ -76,7 +74,7 @@ export const getInitialBoard = (): Cell[][] => {
 export const proximityPrune = (
   board: Board,
   point: [number, number],
-  radius = 3,
+  radius = 3
 ) => {
   const [row, col] = point;
   // For an empty cell, mark cells within the radius as valid
@@ -107,7 +105,7 @@ export const proximityPrune = (
  */
 export const getSuccessors = (
   board: Board,
-  pruneFunctions: ((board: Board, cell: Point) => boolean)[] = [],
+  pruneFunctions: ((board: Board, cell: Point) => boolean)[] = []
 ): Point[] => {
   const successors: Point[] = [];
 
@@ -133,7 +131,7 @@ export const getSuccessors = (
 
 export const makeMove = (board: Board, action: Point, player: Player) => {
   const [row, col] = action;
-  const newBoard = structuredClone(board);
+  const newBoard = board;
   newBoard[row][col] = player;
   return newBoard;
 };
@@ -206,8 +204,8 @@ export const dirKeyToVec = (dirKey: number): Point => {
   return dirKey === 0
     ? [1, 1]
     : dirKey === 1
-      ? [0, 1]
-      : dirKey === -1
-        ? [1, 0]
-        : [1, -1];
+    ? [0, 1]
+    : dirKey === -1
+    ? [1, 0]
+    : [1, -1];
 };

@@ -29,10 +29,11 @@ export const getThreatMapKey = (window: WindowID) => {
  * the board is assumed to be updated already by `action`
  */
 export const updateThreatsMap = (
-  threatsMap: ThreatsMap,
+  _threatsMap: ThreatsMap,
   board: Board,
-  action: Point,
+  action: Point
 ) => {
+  const threatsMap = _threatsMap;
   const affectedWindows = getAllAffectedWindows(action);
 
   for (const window of affectedWindows) {
@@ -80,14 +81,14 @@ const isTypeEThreat = (windowContent: Cell[]): Cell => {
  */
 const isTypeFThreat = (
   windowContent: Cell[],
-  window: WindowID,
+  window: WindowID
 ): [Cell, Point | null] => {
   const [i, j] = window[0];
   const dir = dirKeyToVec(window[1]);
 
   const findPattern = (
     start: number,
-    end: number,
+    end: number
   ): ReturnType<typeof isTypeFThreat> => {
     const subwindow = windowContent.slice(start, end);
     // front check only if at edge
@@ -126,7 +127,7 @@ const isTypeFThreat = (
  */
 export const windowHasThreat = (
   windowContent: Cell[],
-  window: WindowID,
+  window: WindowID
 ): number => {
   // check threats of type A and B (4 in a row)
   const hasAnOpenEnd =
@@ -249,7 +250,7 @@ export const computeCostSquares = (board: Board, threat: Threat) => {
 
   const [threatPlayer, costSquare] = isTypeFThreat(
     windowContent,
-    threat.window,
+    threat.window
   );
   if (threatPlayer === threat.player && !!costSquare) {
     costSquares.push(costSquare);

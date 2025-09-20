@@ -1,5 +1,9 @@
-import { nextMove } from "@/logic/agent";
-import { ThreatsMap, updateThreatsMap } from "@/logic/threats";
+import { evaluation, exampleBoard, nextMove } from "@/logic/agent";
+import {
+  computeCostSquares,
+  ThreatsMap,
+  updateThreatsMap,
+} from "@/logic/threats";
 import {
   Player,
   getInitialBoard,
@@ -8,6 +12,7 @@ import {
   Cell,
   DIM,
   Point,
+  WindowID,
 } from "@/logic/board";
 import { areThreatMapsEqual } from "@/utils/obj";
 import {
@@ -56,7 +61,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
       });
     }
   }, [userPlayer]);
-  console.log("buffered", agentBuffer);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +78,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
       setBoard((b) => {
         // if found winning sequence in buffer, play it
         if (agentBuffer.length > 0) {
-          console.log("using buffered moves");
           const move = agentBuffer[0];
           const newBoard = makeMove(b, move, -userPlayer);
           setAgentBuffer((buf) => buf.slice(1));
@@ -90,7 +93,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
           });
           return newBoard;
         } else if (!!openingTree) {
-          console.log("using hardcoded moves");
           // or if hard coded moves exist
           const children = openingTree.getChildren();
           if (children.length > 0) {
@@ -120,7 +122,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         }
 
         if (aiMove.length > 1) {
-          console.log(aiMove);
           setAgentBuffer(aiMove.slice(1));
         }
         const nextAgentMove = aiMove[0];
@@ -130,7 +131,6 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
 
         setThreatsMap((m) => {
           const updated = updateThreatsMap(m, aiBoard, nextAgentMove);
-          console.log("Updated Threats Map after ai move:", updated);
           setPrevThreatsMap(updated);
           return updated;
         });
@@ -143,7 +143,15 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
     return () => {
       cancelled = true;
     };
-  }, [board, prevBoard, userPlayer, threatsMap, prevThreatsMap, agentBuffer]);
+  }, [
+    board,
+    prevBoard,
+    userPlayer,
+    threatsMap,
+    prevThreatsMap,
+    agentBuffer,
+    openingTree,
+  ]);
 
   if (!userPlayer) return <></>;
 

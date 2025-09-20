@@ -45,14 +45,14 @@ const generateSymmetricOpenings = (tree: OpeningNode): OpeningNode => {
   const traverse = (
     node: OpeningNode,
     operation: (_: Point) => Point,
-    modifyRoot = false,
+    modifyRoot = false
   ): OpeningNode => {
     if (modifyRoot) {
       node.move = operation(node.move);
     }
 
     node.children = node.children.map((child) =>
-      traverse(child, operation, true),
+      traverse(child, operation, true)
     );
 
     return node;
@@ -60,9 +60,7 @@ const generateSymmetricOpenings = (tree: OpeningNode): OpeningNode => {
 
   // four rotational symmetries
   for (const angle of [0, 90, 180, 270]) {
-    all.concat(
-      traverse(structuredClone(tree), (p) => rotate(p, angle)).getChildren(),
-    );
+    all.concat(traverse(tree, (p) => rotate(p, angle)).getChildren());
   }
 
   // flip along each of the 8 mirror symmetries
@@ -71,8 +69,8 @@ const generateSymmetricOpenings = (tree: OpeningNode): OpeningNode => {
       traverse(
         tree,
         (p) => rotate(rotate(p, angle), -angle + 180),
-        true,
-      ).getChildren(),
+        true
+      ).getChildren()
     );
   }
 
@@ -82,5 +80,5 @@ const generateSymmetricOpenings = (tree: OpeningNode): OpeningNode => {
 
 export const hardcodedOpenings = new OpeningNode(
   [7, 7],
-  [new OpeningNode([6, 8], []), new OpeningNode([6, 7], [])],
+  [new OpeningNode([6, 8], []), new OpeningNode([6, 7], [])]
 );
