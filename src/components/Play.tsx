@@ -46,7 +46,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
   const [prevThreatsMap, setPrevThreatsMap] = useState<ThreatsMap>(new Map());
   const [agentBuffer, setAgentBuffer] = useState<Point[]>([]);
   const [openingTree, setOpeningTree] = useState<OpeningNode | null>(
-    new OpeningNode([-1, -1], [hardcodedOpenings]),
+    new OpeningNode([-1, -1], [hardcodedOpenings])
   );
 
   useEffect(() => {
@@ -64,6 +64,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
 
   useEffect(() => {
     let cancelled = false;
+    console.log("triggered");
 
     const makeAiMove = () => {
       if (
@@ -74,6 +75,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         JSON.stringify(board) === JSON.stringify(getInitialBoard())
       )
         return;
+      console.log("AI is thinking...");
 
       setBoard((b) => {
         // if found winning sequence in buffer, play it
@@ -86,7 +88,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
             const updated = updateThreatsMap(
               m,
               newBoard,
-              move as [number, number],
+              move as [number, number]
             );
             setPrevThreatsMap(updated);
             return updated;
@@ -105,7 +107,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
               const updated = updateThreatsMap(
                 m,
                 newBoard,
-                move as [number, number],
+                move as [number, number]
               );
               setPrevThreatsMap(updated);
               return updated;
@@ -143,15 +145,7 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
     return () => {
       cancelled = true;
     };
-  }, [
-    board,
-    prevBoard,
-    userPlayer,
-    threatsMap,
-    prevThreatsMap,
-    agentBuffer,
-    openingTree,
-  ]);
+  }, [board, prevBoard, userPlayer, threatsMap, prevThreatsMap]);
 
   if (!userPlayer) return <></>;
 
@@ -165,8 +159,8 @@ const Component: FC<PlayProps> = ({ userPlayer }) => {
         {winner === Cell.BLACK
           ? "Black wins!"
           : winner === Cell.WHITE
-            ? "White wins!"
-            : "It's a draw!"}
+          ? "White wins!"
+          : "It's a draw!"}
       </div>
 
       <div

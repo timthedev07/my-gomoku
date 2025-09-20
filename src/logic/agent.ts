@@ -14,7 +14,7 @@ import { computeCostSquares, ThreatsMap, updateThreatsMap } from "./threats";
 export const nextMove = (
   board: Board, // assumes the board is non-terminal
   player: Player, // the player for which to suggest a move
-  threatsMap: ThreatsMap
+  threatsMap: ThreatsMap,
 ) => {
   const s = minimax(board, 3, player, threatsMap);
   console.log(s[1]);
@@ -103,7 +103,7 @@ const orderCostSquares = (
   costSquares: Point[],
   board: Board,
   threatsMap: ThreatsMap,
-  opponent: Player
+  opponent: Player,
 ): Point[] => {
   // TODO
   return costSquares;
@@ -117,7 +117,7 @@ export const tss = (
   board: Board,
   player: Player,
   threatsMap: ThreatsMap,
-  successors: Point[]
+  successors: Point[],
 ): Point[] | null => {
   for (const successor of successors) {
     const boardPostSucc = makeMove(board, successor, player);
@@ -132,7 +132,7 @@ export const tss = (
     const updatedThreatsMap = updateThreatsMap(
       threatsMap,
       boardPostSucc,
-      successor
+      successor,
     );
     if (updatedThreatsMap.size === threatsMap.size) {
       continue;
@@ -149,7 +149,7 @@ export const tss = (
         costSquares,
         boardPostSucc,
         updatedThreatsMap,
-        -player
+        -player,
       );
 
       for (const costSquare of orderedCostSquares) {
@@ -157,18 +157,18 @@ export const tss = (
         const postBlockThreats = updateThreatsMap(
           updatedThreatsMap,
           boardWithBlock,
-          costSquare
+          costSquare,
         );
 
         const result = tss(
           boardWithBlock,
           player,
           postBlockThreats,
-          getSuccessors(board, [proximityPrune])
+          getSuccessors(board, [proximityPrune]),
         );
 
         // if there is any way the opponent can block, then this is not a forced win
-        if (result !== null) {
+        if (result === null) {
           continue;
         }
         successfulSubsequence = result;
@@ -183,7 +183,7 @@ export const minimax = (
   board: Board,
   depth: number,
   player: Player,
-  threatsMap: ThreatsMap
+  threatsMap: ThreatsMap,
 ) => {
   if (player === Cell.BLACK) {
     return maximise(board, -Infinity, Infinity, depth, threatsMap);
@@ -197,7 +197,7 @@ export const minimise = (
   alpha: number,
   beta: number,
   depth: number,
-  threatsMap: ThreatsMap
+  threatsMap: ThreatsMap,
 ): [null | Point[], number] => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
@@ -225,7 +225,7 @@ export const minimise = (
       alpha,
       beta,
       depth - 1,
-      updatedThreatsMap
+      updatedThreatsMap,
     );
     if (value < minVal) {
       minVal = value;
@@ -246,7 +246,7 @@ export const maximise: typeof minimise = (
   alpha,
   beta,
   depth,
-  threatsMap
+  threatsMap,
 ) => {
   const [isTerminal, winner] = terminal(board);
   if (isTerminal) {
@@ -274,7 +274,7 @@ export const maximise: typeof minimise = (
       alpha,
       beta,
       depth - 1,
-      updatedThreatsMap
+      updatedThreatsMap,
     );
     if (value > maxVal) {
       maxVal = value;

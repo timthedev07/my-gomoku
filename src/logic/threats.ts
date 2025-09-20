@@ -33,7 +33,7 @@ export const updateThreatsMap = (
   board: Board,
   action: Point
 ) => {
-  const threatsMap = _threatsMap;
+  const threatsMap = structuredClone(_threatsMap);
   const affectedWindows = getAllAffectedWindows(action);
 
   for (const window of affectedWindows) {
